@@ -38,6 +38,7 @@ class DTED(nn.Module):
         super(DTED, self).__init__()
 
         # Cache some specific configurations
+        self.input_dict = None
         self.normalize_3d_codes = normalize_3d_codes
         self.normalize_3d_codes_axis = normalize_3d_codes_axis
         self.use_triplet = use_triplet
@@ -144,7 +145,12 @@ class DTED(nn.Module):
                 return F.normalize(code, dim=norm_axis)
         return code
 
+    def set_input_dict(self, inp_dict):
+        self.input_dict = inp_dict
+
     def forward(self, data, loss_functions=None):
+        if self.input_dict is not None:
+            data = self.input_dict
         is_inference_time = ('image_b' not in data)
         self.batch_size = data['image_a'].shape[0]
 

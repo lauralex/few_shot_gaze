@@ -22,10 +22,11 @@ cam_idx = 0
 
 # adjust these for your camera to get the best accuracy
 # use the same parameters to run the actual demoqsqq
-call('v4l2-ctl -d /dev/video%d -c brightness=100' % cam_idx, shell=True)
-call('v4l2-ctl -d /dev/video%d -c contrast=50' % cam_idx, shell=True)
-call('v4l2-ctl -d /dev/video%d -c sharpness=100' % cam_idx, shell=True)
+#call('v4l2-ctl -d /dev/video%d -c brightness=100' % cam_idx, shell=True)
+#call('v4l2-ctl -d /dev/video%d -c contrast=50' % cam_idx, shell=True)
+#call('v4l2-ctl -d /dev/video%d -c sharpness=100' % cam_idx, shell=True)
 
+#cam_cap = cv2.VideoCapture('../../Camera_cal.mp4')
 cam_cap = cv2.VideoCapture(cam_idx)
 cam_cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cam_cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)

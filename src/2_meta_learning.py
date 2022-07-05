@@ -151,7 +151,7 @@ class TestTasks(Tasks):
     Replacement classes for standard PyTorch Module and Linear.
 """
 
-
+graph_enabled = False
 class ModifiableModule(nn.Module):
     def params(self):
         return [p for _, p in self.named_params()]
@@ -180,7 +180,7 @@ class ModifiableModule(nn.Module):
                     break
         else:
             if copy is True:
-                setattr(self, name, V(param.data.clone(), requires_grad=True))
+                setattr(self, name, V(param.data.clone(), requires_grad=not graph_enabled))
             else:
                 assert hasattr(self, name)
                 setattr(self, name, param)
@@ -198,8 +198,8 @@ class GradLinear(ModifiableModule):
         nn.init.normal_(ignore.weight.data, mean=0.0, std=np.sqrt(1. / args[0]))
         nn.init.constant_(ignore.bias.data, val=0)
 
-        self.weights = V(ignore.weight.data, requires_grad=True).to(device)
-        self.bias = V(ignore.bias.data, requires_grad=True).to(device)
+        self.weights = V(ignore.weight.data, requires_grad=not graph_enabled).to(device)
+        self.bias = V(ignore.bias.data, requires_grad=not graph_enabled).to(device)
 
     def forward(self, x):
         return F.linear(x, self.weights, self.bias).to(device)
@@ -331,11 +331,16 @@ def forward_and_backward(model, data, optim=None, create_graph=False,
         optim.step()
     return loss.data.cpu().numpy()
 
+is_first = True
 
 def forward(model, data, return_predictions=False, train_data=None,
-            for_backward=False, loss_function=nn_mean_angular_loss):
+            for_backward=False, loss_function=nn_mean_angular_loss, tensorboard=None):
     model.train()
+    global is_first
     x, y = data
+    if tensorboard is not None and is_first and graph_enabled:
+        tensorboard.add_graph(model, V(x))
+        is_first = False
     y_hat = model(V(x))
     loss = loss_function(y_hat, V(y))
     if return_predictions:
@@ -462,7 +467,7 @@ class MAML(object):
 
                     train_data, test_data = test_tasks.sample_for_task(i, num_train=self.k)
                     if num_iterations[0] == 0:
-                        train_loss = forward(model, train_data)
+                        train_loss = forward(model, train_data, tensorboard=self.tensorboard)
                         test_loss = forward(model, test_data, train_data=train_data)
                         losses[0].append((train_loss, test_loss))
                     for j in range(np.amax(num_iterations)):

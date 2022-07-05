@@ -74,6 +74,8 @@ def grab_img(cap):
     global frames
     while THREAD_RUNNING:
         _, frame = cap.read()
+        cv2.imshow('my face', frame)
+        cv2.waitKey(1)
         frames.append(frame)
 
 
@@ -145,6 +147,8 @@ def fine_tune(subject, data, frame_processor, mon, device, gaze_network, k, step
     # collect person calibration data
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('%s_calib.avi' % subject, fourcc, 30.0, (640, 480))
+
+
     target = []
     for index, frames in enumerate(data['frames']):
         n = 0
@@ -152,7 +156,7 @@ def fine_tune(subject, data, frame_processor, mon, device, gaze_network, k, step
             frame = frames[i]
             g_t = data['g_t'][index]
             target.append(g_t)
-            out.write(frame)
+            out.write(cv2.resize(frame, dsize=(640, 480), interpolation=cv2.INTER_CUBIC))
 
             # # show
             # cv2.putText(frame, str(n),(20,20), cv2.FONT_HERSHEY_SIMPLEX, 1, (200,0,0), 3, cv2.LINE_AA)
@@ -171,7 +175,7 @@ def fine_tune(subject, data, frame_processor, mon, device, gaze_network, k, step
     vid_cap.release()
 
     n = len(data['image_a'])
-    assert n==130, "Face not detected correctly. Collect calibration data again."
+    assert n==70, "Face not detected correctly. Collect calibration data again."
     _, c, h, w = data['image_a'][0].shape
     img = np.zeros((n, c, h, w))
     gaze_a = np.zeros((n, 2))
